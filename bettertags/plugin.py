@@ -45,12 +45,16 @@ class TagsPlugin(BasePlugin[TagsConfig]):
         if not self._is_enabled():
             return
 
+        tags_extra_files = self.config.get("tags_extra_files", dict())
+        if tags_extra_files == None:
+            tags_extra_files = dict()
+        indices = self.config.get("indices", dict())
+        if indices == None:
+            indices = dict()
         self.index_rules, self.index_priority = self._extract_rules_and_priority(
             {
-                **self.config.get(
-                    "tags_extra_files", dict()
-                ),  # compat with bad naming by material
-                **self.config.get("indices", dict()),
+                **tags_extra_files,  # compat with bad naming by material
+                **indices,
             }
         )
         if self.config.tags_file:
@@ -151,7 +155,6 @@ class TagsPlugin(BasePlugin[TagsConfig]):
         else:
             best_index_file = self.index_files[best_index]
             url = f"{best_index_file.url}#{self.slugify(tag)}"
-            print(url)
             return dict(name=tag, type=tag_type, url=url)
 
     def _is_enabled(self):
