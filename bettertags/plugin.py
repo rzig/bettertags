@@ -37,7 +37,11 @@ class TagsPlugin(BasePlugin[TagsConfig]):
         toc["slugify"] = self.config.get("tags_slugify", toc["slugify"])
         toc["separator"] = self.config.get("tags_slugify_separator", toc["separator"])
 
-        self.tag_sort_key = self.config.get("tags_compare", lambda s: s)
+        iden = lambda x: x
+        self.tag_sort_key = self.config.get("tags_compare", iden)
+        self.tags_reorder = (
+            reversed if self.config.get("tags_compare_reverse", False) else iden
+        )
 
         self.slugify = lambda value: (toc["slugify"](str(value), toc["separator"]))
 
@@ -116,8 +120,8 @@ class TagsPlugin(BasePlugin[TagsConfig]):
             "\n".join(
                 [
                     self._render_tag_links(index_file, *args)
-                    for args in sorted(
-                        tags.items(), key=lambda tag: self.tag_sort_key(tag[0])
+                    for args in self.tags_reorder(
+                        sorted(tags.items(), key=lambda tag: self.tag_sort_key(tag[0]))
                     )  # sort by tag name
                 ]
             ),
