@@ -34,6 +34,9 @@ class TagsPlugin(BasePlugin[TagsConfig]):
         if "toc" in config.mdx_configs:
             toc = {**toc, **config.mdx_configs["toc"]}
 
+        if self.config.get("tags_slugify") is not None:
+            toc["slugify"] = self.config.get("tags_slugify")
+        
         self.slugify = lambda value: (toc["slugify"](str(value), toc["separator"]))
 
     def on_nav(self, nav, config, files):
