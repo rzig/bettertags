@@ -34,8 +34,8 @@ class TagsPlugin(BasePlugin[TagsConfig]):
         if "toc" in config.mdx_configs:
             toc = {**toc, **config.mdx_configs["toc"]}
 
-        if self.config.get("tags_slugify") is not None:
-            toc["slugify"] = self.config.get("tags_slugify")
+        toc["slugify"] = self.config.get("tags_slugify", toc["slugify"])
+        toc["separator"] = self.config.get("tags_slugify_separator", toc["separator"])
         
         self.slugify = lambda value: (toc["slugify"](str(value), toc["separator"]))
 
@@ -129,7 +129,9 @@ class TagsPlugin(BasePlugin[TagsConfig]):
                 classes.append(f"md-tag--{type}")
 
         classes = " ".join(classes)
-        content = [f'## <span class="{classes}">{tag}</span>', ""]
+        # tag slugify separator might be different than mdx separator
+        # so we need to manually specify the h2 id
+        content = [f'<h2 id="{self.slugify(tag)}"><span class="{classes}">{tag}</span></h2>', ""]
         for page in pages:
             url = utils.get_relative_url(page.file.src_uri, index_file.src_uri)
             title = page.meta.get("title", page.title)
