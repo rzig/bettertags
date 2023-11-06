@@ -36,7 +36,9 @@ class TagsPlugin(BasePlugin[TagsConfig]):
 
         toc["slugify"] = self.config.get("tags_slugify", toc["slugify"])
         toc["separator"] = self.config.get("tags_slugify_separator", toc["separator"])
-        
+
+        self.tag_sort_key = self.config.get("tags_compare", lambda s: s)
+
         self.slugify = lambda value: (toc["slugify"](str(value), toc["separator"]))
 
     def on_nav(self, nav, config, files):
@@ -114,7 +116,9 @@ class TagsPlugin(BasePlugin[TagsConfig]):
             "\n".join(
                 [
                     self._render_tag_links(index_file, *args)
-                    for args in sorted(tags.items())
+                    for args in sorted(
+                        tags.items(), key=lambda tag: self.tag_sort_key(tag[0])
+                    )  # sort by tag name
                 ]
             ),
         )
@@ -131,7 +135,10 @@ class TagsPlugin(BasePlugin[TagsConfig]):
         classes = " ".join(classes)
         # tag slugify separator might be different than mdx separator
         # so we need to manually specify the h2 id
-        content = [f'<h2 id="{self.slugify(tag)}"><span class="{classes}">{tag}</span></h2>', ""]
+        content = [
+            f'<h2 id="{self.slugify(tag)}"><span class="{classes}">{tag}</span></h2>',
+            "",
+        ]
         for page in pages:
             url = utils.get_relative_url(page.file.src_uri, index_file.src_uri)
             title = page.meta.get("title", page.title)
