@@ -4,9 +4,6 @@ from collections import defaultdict
 from markdown.extensions.toc import slugify
 from mkdocs import utils
 from mkdocs.plugins import BasePlugin
-
-# deprecated, but kept for downward compatibility. Use 'material.plugins.tags'
-# as an import source instead. This import is removed in the next major version.
 from . import casefold
 from .config import TagsConfig
 
@@ -33,12 +30,10 @@ class TagsPlugin(BasePlugin[TagsConfig]):
 
         self.tags_map = config.extra.get("tags")
 
-        # Use override of slugify function
         toc = {"slugify": slugify, "separator": "-"}
         if "toc" in config.mdx_configs:
             toc = {**toc, **config.mdx_configs["toc"]}
 
-        # Partially apply slugify function
         self.slugify = lambda value: (toc["slugify"](str(value), toc["separator"]))
 
     def on_nav(self, nav, config, files):
@@ -48,13 +43,13 @@ class TagsPlugin(BasePlugin[TagsConfig]):
         tags_extra_files = self.config.get("tags_extra_files", dict())
         if tags_extra_files == None:
             tags_extra_files = dict()
-        indices = self.config.get("indices", dict())
-        if indices == None:
-            indices = dict()
+        indexes = self.config.get("indexes", dict())
+        if indexes == None:
+            indexes = dict()
         self.index_rules, self.index_priority = self._extract_rules_and_priority(
             {
                 **tags_extra_files,  # compat with bad naming by material
-                **indices,
+                **indexes,
             }
         )
         if self.config.tags_file:
@@ -68,7 +63,7 @@ class TagsPlugin(BasePlugin[TagsConfig]):
             zip(self.index_filenames, map(load_file, self.index_filenames))
         )
         self.tags_in_index = {f: defaultdict(list) for f in self.index_filenames}
-        self.indices_with_tag = defaultdict(set)
+        self.indexes_with_tag = defaultdict(set)
 
         self.allowed_tags = self.config.get("tags_allowed", None)
 
@@ -87,7 +82,7 @@ class TagsPlugin(BasePlugin[TagsConfig]):
                     self._validate_tag(page.file.src_uri, tag)
                     if self._tag_allowed_in_index(index_page, tag):
                         self.tags_in_index[index_page][tag].append(page)
-                        self.indices_with_tag[tag].add(index_page)
+                        self.indexes_with_tag[tag].add(index_page)
 
     def on_page_context(self, context, page, config, nav):
         if not self._is_enabled():
@@ -122,7 +117,6 @@ class TagsPlugin(BasePlugin[TagsConfig]):
         )
         return markdown
 
-    # Render the given tag and links to all pages with occurrences
     def _render_tag_links(self, index_file, tag, pages):
         classes = ["md-tag"]
         if isinstance(self.tags_map, dict):
@@ -131,23 +125,18 @@ class TagsPlugin(BasePlugin[TagsConfig]):
             if type:
                 classes.append(f"md-tag--{type}")
 
-        # Render section for tag and a link to each page
         classes = " ".join(classes)
         content = [f'## <span class="{classes}">{tag}</span>', ""]
         for page in pages:
             url = utils.get_relative_url(page.file.src_uri, index_file.src_uri)
-
-            # Render link to page
             title = page.meta.get("title", page.title)
             content.append(f"- [{title}]({url})")
 
-        # Return rendered tag links
         return "\n".join(content)
 
-    # Render the given tag, linking to the tags index (if enabled)
     def _render_tag(self, page, tag):
         best_index = argmax(
-            lambda p: self.index_priority[p], self.indices_with_tag[tag]
+            lambda p: self.index_priority[p], self.indexes_with_tag[tag]
         )
         tag_type = self.tags_map.get(tag) if self.tags_map else None
         if not best_index:
