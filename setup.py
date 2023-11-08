@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="bettertags",
-    version="1.0.2",
+    version="1.0.3",
     author="ryan",
     author_email="ryan@ziegler.lol",
     url="https://github.com/rzig/bettertags",

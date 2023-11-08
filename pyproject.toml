@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta:__legacy__"
 
 [project]
 name = "bettertags"
-version = "1.0.2"
+version = "1.0.3"
 description = "mkdocs-material tag plugin with free enhanced versions of some insiders features"
 readme = "README.md"
 authors = [{ name = "Ryan Ziegler", email = "ryan@ziegler.lol" }]

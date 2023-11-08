@@ -10,6 +10,11 @@ from .config import TagsConfig
 DEFAULT_PRIORITY = 0
 
 
+class MaterialTagsShim(BasePlugin[TagsConfig]):
+    def __init__(self):
+        pass
+
+
 def argmax(f, it):
     cur_max = None
     set_by = None
@@ -38,9 +43,13 @@ class TagsPlugin(BasePlugin[TagsConfig]):
         toc["separator"] = self.config.get("tags_slugify_separator", toc["separator"])
 
         iden = lambda x: x
-        self.tag_sort_key = self.config.get("tags_compare", iden)
+        self.tag_sort_key = self.config.get("tags_compare")
         self.tags_reorder = (
             reversed if self.config.get("tags_compare_reverse", False) else iden
+        )
+        self.page_sort_key = self.config.get("tags_pages_compare")
+        self.pages_reorder = (
+            reversed if self.config.get("tags_pages_compare_reverse", False) else iden
         )
 
         self.slugify = lambda value: (toc["slugify"](str(value), toc["separator"]))
@@ -98,6 +107,9 @@ class TagsPlugin(BasePlugin[TagsConfig]):
             return
 
         if "tags" in page.meta:
+            # Bypass check for material/tags at
+            # https://github.com/squidfunk/mkdocs-material/blob/master/src/templates/partials/content.html#L24
+            context["config"]["plugins"]["material/tags"] = MaterialTagsShim()
             context["tags"] = [self._render_tag(page, tag) for tag in page.meta["tags"]]
 
     # -------------------------------------------------------------------------
@@ -121,7 +133,9 @@ class TagsPlugin(BasePlugin[TagsConfig]):
                 [
                     self._render_tag_links(index_file, *args)
                     for args in self.tags_reorder(
-                        sorted(tags.items(), key=lambda tag: self.tag_sort_key(tag[0]))
+                        self._sort_if_possible(
+                            self.tag_sort_key, tags.items(), by=lambda tag: tag[0]
+                        )
                     )  # sort by tag name
                 ]
             ),
@@ -143,7 +157,9 @@ class TagsPlugin(BasePlugin[TagsConfig]):
             f'<h2 id="{self.slugify(tag)}"><span class="{classes}">{tag}</span></h2>',
             "",
         ]
-        for page in pages:
+        for page in self.pages_reorder(
+            self._sort_if_possible(self.page_sort_key, pages)
+        ):
             url = utils.get_relative_url(page.file.src_uri, index_file.src_uri)
             title = page.meta.get("title", page.title)
             content.append(f"- [{title}]({url})")
@@ -214,6 +230,12 @@ class TagsPlugin(BasePlugin[TagsConfig]):
         if self.allowed_tags and tag not in self.allowed_tags:
             log.error(f"Tag '{tag}' is not allowed, found at file {src_uri}")
             sys.exit(1)
+
+    def _sort_if_possible(self, data_key, data, by=lambda x: x):
+        if data_key is not None:
+            return sorted(data, key=lambda data: data_key(by(data)))
+        else:
+            return data
 
 
 log = logging.getLogger("mkdocs.material.tags")
