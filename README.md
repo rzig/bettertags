@@ -10,7 +10,7 @@ This plugin is originally based on the MIT-licensed source from `mkdocs-material
 2. Replace the `tags` configruation option of your `mkdocs.yml` with `bettertags`
 3. If you use Material-provided functions for `tags_compare` or `tags_pages_compare`, replace `material.plugins.tags` with `bettertags`
 
-You can now use any insiders-only features [described in the Material docs](https://squidfunk.github.io/mkdocs-material/plugins/tags). I've also added a features to `tags_extra_files`, described below.
+You can now use any insiders-only features [described in the Material docs](https://squidfunk.github.io/mkdocs-material/plugins/tags). I've also added a few features to `tags_extra_files`, described below.
 
 ## `tags_extra_files`
 
