@@ -25,10 +25,17 @@ def argmax(f, it):
             set_by = x
     return set_by
 
+def lcp(x, y):
+    l = 0
+    for i in range(min(len(x), len(y))):
+        if x[i] == y[i]:
+            l += 1
+        else:
+            break
+    return l
+
 
 class TagsPlugin(BasePlugin[TagsConfig]):
-    supports_multiple_instances = True
-
     def on_config(self, config):
         if not self._is_enabled():
             return
@@ -168,7 +175,7 @@ class TagsPlugin(BasePlugin[TagsConfig]):
 
     def _render_tag(self, page, tag):
         best_index = argmax(
-            lambda p: self.index_priority[p], self.indexes_with_tag[tag]
+            lambda p: (self.index_priority[p], lcp(p, page.file.src_uri)), self.indexes_with_tag[tag]
         )
         tag_type = self.tags_map.get(tag) if self.tags_map else None
         if not best_index:
